@@ -4,15 +4,19 @@ import numpy as np
 import matplotlib.pyplot as plt
 #from pkg_resources import resource_filename
 #from desiutil.log import get_logger
-from desitarget import cuts
+#from desitarget import cuts
 #import astropy.io.fits as pyfits
 import fitsio
 #import healpy as hp
 
-colorcuts_function = cuts.isELG_colors
+# to work on Mehdi's local pc
+from cuts import isELG_colors as colorcuts_function
+#colorcuts_function = cuts.isELG_colors
+
 
 #deep DECaLS imaging, with photozs from HSC
-truthf = '/global/cscratch1/sd/raichoor/desi_mcsyst/desi_mcsyst_truth.dr7.34ra38.-7dec-3.fits' 
+#truthf = '/global/cscratch1/sd/raichoor/desi_mcsyst/desi_mcsyst_truth.dr7.34ra38.-7dec-3.fits' 
+truthf = '/home/mehdi/data/desi_mcsyst_truth.dr7.34ra38.-7dec-3.fits' ## Mehdi's local pc
 truth  = fitsio.read(truthf,1)
 gmag  = truth["g"]
 w = gmag < 24.5
@@ -71,14 +75,38 @@ def getrelnz(sigg,sigr,sigz,bs=0.05,zmin=0.6,zmax=1.4,south=True):
 	return zl,nzrel
 
 if __name__ == '__main__':
-	'''
-	For now, just a test to show it works
-	'''
+    '''
+    For now, just a test to show it works
+    '''
+    from scipy.interpolate import InterpolatedUnivariateSpline
+    from argparse import ArgumentParser
+    ap = ArgumentParser(description='Monte Carlo of Depth')
+    #ap.add_argument('--input',  default='galaxy.fits')
+    #ap.add_argument('--output', default='galaxy.mc.fits')
+    ap.add_argument('--sigmag', default=0.04) 
+    ap.add_argument('--sigmar', default=0.065)
+    ap.add_argument('--sigmaz', default=0.085)
+    ns = ap.parse_args()
 	
-	sigg,sigr,sigz = float(sys.argv[1]),float(sys.argv[2]),float(sys.argv[3])
-	zl,nzrel = getrelnz(sigg,sigr,sigz)
-	plt.plot(zl,nzrel,'k-')
-	plt.show()
-	'''
-	AJR suggests taking this curve, fitting a smooth function to it, and then using that to modulate the mocks
-	'''
+    #sigg,sigr,sigz = float(sys.argv[1]),float(sys.argv[2]),float(sys.argv[3])
+    sigg = ns.sigmag
+    sigr = ns.sigmar
+    sigz = ns.sigmaz
+    
+    zl,nzrel = getrelnz(sigg,sigr,sigz)
+
+    # fit a spline with degree k=3
+    IUS = InterpolatedUnivariateSpline(zl, nzrel)
+    zgrid  = np.linspace(0.99*zl.min(), 1.01*zl.max(), 100)
+    nzrels = IUS(zgrid)
+
+    plt.title('sig_g, sig_r, sig_z : [{0:.3f}, {1:.3f}, {2:.4f}]'.format(sigg, sigr, sigz))
+    plt.scatter(zl, nzrel, marker='.', color='k')
+    plt.plot(zgrid, nzrels, label='Spline (K=3)')
+    plt.legend()
+    plt.xlabel('Z')
+    plt.ylabel(r'$\Delta$N(Z)')
+    plt.savefig('dnz.png')
+    '''
+    AJR suggests taking this curve, fitting a smooth function to it, and then using that to modulate the mocks
+    '''
