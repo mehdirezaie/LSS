@@ -3,7 +3,7 @@
     Use Nbodykit to compute P0
 
 '''
-
+import sys
 import nbodykit.lab as nb
 import numpy as np
 
@@ -24,11 +24,11 @@ if rank == 0:
     from argparse import ArgumentParser
     ap = ArgumentParser(description='Power Spectrum')
     ap.add_argument('--data',    default='/B/Shared/Shadab/FA_LSS/FA_EZmock_desi_ELG_v0_15.fits')
-    ap.add_argument('--randoms', default='/B/Shared/Shadab/FA_LSS/FA_EZmock_desi_ELG_v0_rand_00.fits')
+    ap.add_argument('--randoms', nargs='*', type=str, default='/B/Shared/Shadab/FA_LSS/FA_EZmock_desi_ELG_v0_rand_0*.fits')
     ap.add_argument('--mask',    default='None')
     ap.add_argument('--output',  default='/home/mehdi/data/mocksys/pk_v0_15.txt')
-    ap.add_argument('--nmesh',   default=256, type=int)
-    ap.add_argument('--zlim',    nargs='*', type=float, default=[0.7, 0.9])
+    ap.add_argument('--nmesh',   default=512, type=int) # v0.1 256
+    ap.add_argument('--zlim',    nargs='*', type=float, default=[0.7, 1.5]) # v0.1 [0.7, 0.9]
     ap.add_argument('--poles',   nargs='*', type=int, default=[0, 2, 4])
     ap.add_argument('--real',    action='store_true')
     ns = ap.parse_args()
@@ -51,15 +51,25 @@ if ns.mask != 'None':
 else:
     mask    = None
 
-if ns.real:
-    zcol_name = 'Z_COSMO'
-else:
-    zcol_name = 'Z'
-        
 
+        
 
 data    = nb.FITSCatalog(ns.data)
 randoms = nb.FITSCatalog(ns.randoms)
+
+
+if ns.real:
+    zcol_name = 'Z_COSMO'
+else:
+    zcol_name = 'Z_RSD'
+    data[zcol_name]    = data['Z_COSMO'] + data['DZ_RSD']
+    randoms[zcol_name] = randoms['Z_COSMO'] + randoms['DZ_RSD']
+    
+
+if rank == 0:
+    print('Only Rank %d'%rank)
+    print('Data : ', data.columns, data.csize, data.size)
+    print('Randoms : ', randoms.columns, randoms.csize, randoms.size)    
 
 
 # slice the data and randoms
@@ -68,9 +78,13 @@ if mask is None:
 else:
     valid = (data[zcol_name] > ZMIN)&(data[zcol_name] < ZMAX)\
             & (mask['bool_index'])
-       
+    
 data = data[valid]
-randoms[zcol_name] = np.random.choice(data[zcol_name], size=randoms.size)
+
+
+valid = (randoms[zcol_name] > ZMIN)&(randoms[zcol_name] < ZMAX)
+randoms = randoms[valid]
+
 
 data['Position']    = SkyToCartesian(data['RA'],    
                                      data['DEC'],    
@@ -105,8 +119,7 @@ mesh = fkp.to_mesh(Nmesh=ns.nmesh,
                    fkp_weight='FKPWeight', 
                    comp_weight='Weight', 
                    window='tsc')
-
-r  = nb.ConvolvedFFTPower(mesh, poles=ns.poles, dk=0.001, kmin=0.0)
+r    = nb.ConvolvedFFTPower(mesh, poles=ns.poles, dk=0.001, kmin=0.0)
 
 
 comm.Barrier()
