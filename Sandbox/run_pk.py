@@ -82,9 +82,10 @@ else:
 data = data[valid]
 
 
-valid = (randoms[zcol_name] > ZMIN)&(randoms[zcol_name] < ZMAX)
+valid   = (randoms[zcol_name] > ZMIN)&(randoms[zcol_name] < ZMAX)
 randoms = randoms[valid]
 
+#print(data.size, randoms.size)
 
 data['Position']    = SkyToCartesian(data['RA'],    
                                      data['DEC'],    
@@ -129,17 +130,18 @@ if rank == 0:
     output.write('# k_min P0 P2 P4\n')
     for i in range(r.poles['k'].size):
         output.write('{} {} {} {}\n'.format(r.poles['k'][i], 
-                                            r.poles['power_0'][i].real, 
+                                            r.poles['power_0'][i].real-r.poles.attrs['shotnoise'], 
                                             r.poles['power_2'][i].real, 
                                             r.poles['power_4'][i].real))   
 
     #
     import matplotlib
-    matplotlit.use('Agg')
+    matplotlib.use('Agg')
     import matplotlib.pyplot as plt
 
     k = r.poles['k']
     plt.figure()
+    plt.title(zcol_name)
     for ell in [0, 2, 4]:
         pk = r.poles['power_%d'%ell].real
         if ell == 0:pk -= r.poles.attrs['shotnoise']
