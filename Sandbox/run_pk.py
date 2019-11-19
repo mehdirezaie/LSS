@@ -131,4 +131,20 @@ if rank == 0:
         output.write('{} {} {} {}\n'.format(r.poles['k'][i], 
                                             r.poles['power_0'][i].real, 
                                             r.poles['power_2'][i].real, 
-                                            r.poles['power_4'][i].real))    
+                                            r.poles['power_4'][i].real))   
+
+    #
+    import matplotlib
+    matplotlit.use('Agg')
+    import matplotlib.pyplot as plt
+
+    k = r.poles['k']
+    plt.figure()
+    for ell in [0, 2, 4]:
+        pk = r.poles['power_%d'%ell].real
+        if ell == 0:pk -= r.poles.attrs['shotnoise']
+        plt.plot(k, k*pk, label=r'$\ell$=%d'%ell)
+    plt.ylabel(r'kP$_{\ell}$(k)')
+    plt.xlabel('k [h/Mpc]')
+    plt.savefig(ns.output.replace('.txt', '.pdf'))
+    print('plot done!')
