@@ -2,6 +2,9 @@
 
     Use Nbodykit to compute P0
 
+
+
+    - Nov 28: The functionality for reading multiple randoms does not work
 '''
 import sys
 import nbodykit.lab as nb
@@ -25,6 +28,7 @@ if rank == 0:
     ap = ArgumentParser(description='Power Spectrum')
     ap.add_argument('--data',    default='/B/Shared/Shadab/FA_LSS/FA_EZmock_desi_ELG_v0_15.fits')
     ap.add_argument('--randoms', nargs='*', type=str, default='/B/Shared/Shadab/FA_LSS/FA_EZmock_desi_ELG_v0_rand_0*.fits')
+    #ap.add_argument('--randoms', default='/B/Shared/Shadab/FA_LSS/FA_EZmock_desi_ELG_v0_rand_01.fits')
     ap.add_argument('--mask',    default='None')
     ap.add_argument('--output',  default='/home/mehdi/data/mocksys/pk_v0_15.txt')
     ap.add_argument('--nmesh',   default=512, type=int) # v0.1 256
@@ -86,7 +90,7 @@ valid   = (randoms[zcol_name] > ZMIN)&(randoms[zcol_name] < ZMAX)
 randoms = randoms[valid]
 
 #print(data.size, randoms.size)
-
+#sys.exit()
 data['Position']    = SkyToCartesian(data['RA'],    
                                      data['DEC'],    
                                      data[zcol_name],    
@@ -125,6 +129,9 @@ r    = nb.ConvolvedFFTPower(mesh, poles=ns.poles, dk=0.001, kmin=0.0)
 
 comm.Barrier()
 if rank == 0:
+    #
+    # write P0-shotnoise P2 P4 to file
+
     output = open(ns.output, 'w')
     output.write('# shotnoise %f \n'%r.poles.attrs['shotnoise'])
     output.write('# k_min P0 P2 P4\n')
@@ -134,7 +141,7 @@ if rank == 0:
                                             r.poles['power_2'][i].real, 
                                             r.poles['power_4'][i].real))   
 
-    #
+    # plot k vs kPell
     import matplotlib
     matplotlib.use('Agg')
     import matplotlib.pyplot as plt
