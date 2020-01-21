@@ -137,7 +137,7 @@ if rank == 0:
     for k in r.attrs:
         output.write(f'#{k:20s} : {r.attrs[k]}\n')
     
-    output.write('# k_mid P0 P2 P4 Nmodes\n')
+    output.write('# k_avg P0 P2 P4 Nmodes\n')
     for i in range(r.poles['k'].size):
         output.write('{} {} {} {} {}\n'.format(r.poles['k'][i], 
                                                r.poles['power_0'][i].real-r.poles.attrs['shotnoise'], 

@@ -3,7 +3,11 @@
     This scripts, rebins the measurements, and adds that column
 
     To run (loop over mock ids) 
-    > for i in {3..100};do python rebin_kpk.py /home/mehdi/data/mocksys/v0.5/pk_v0_${i}_red_1_0.5.txt /home/mehdi/data/mocksys/v0.6/pk_v0_${i}_red_1_0.6.txt;done
+    > for i in {2..100};
+      do 
+      python rebin_kpk.py /home/mehdi/data/mocksys/v0.5/pk_v0_${i}_red_1_0.5.txt /home/mehdi/data/mocksys/v0.6/pk_v0_${i}_red_1_0.6.txt;
+      python rebin_kpk.py /home/mehdi/data/mocksys/v0.5/pk_v0_${i}_red_0_0.5.txt /home/mehdi/data/mocksys/v0.6/pk_v0_${i}_red_0_0.6.txt;
+      done
 
 '''
 
@@ -20,15 +24,17 @@ def rebin(kin, p0, p2, p4, modes, kout):
     kwargs = dict(statistic='sum', bins=kout)
     
     bmodes,_,_   = binned_statistic(kin, modes,    **kwargs)    
+    kmodes,_,_   = binned_statistic(kin, kin*modes, **kwargs)    
     p0modes,_,_  = binned_statistic(kin, p0*modes, **kwargs)
     p2modes,_,_  = binned_statistic(kin, p2*modes, **kwargs)
     p4modes,_,_  = binned_statistic(kin, p4*modes, **kwargs)
 
+    knew  = kmodes/bmodes
     p0new = p0modes/bmodes
     p2new = p2modes/bmodes
     p4new = p4modes/bmodes
     
-    return (kout[:-1], p0new, p2new, p4new, bmodes)
+    return (knew, p0new, p2new, p4new, bmodes)
 
 def read(inputFile):
     
@@ -75,16 +81,11 @@ def main(sys):
     assert np.array_equal(kin, kinp)
     del kinp
     
-    kmin  = kin.min()
-    kmax  = kin.max()
-    dkold = kin[1]-kin[0]
-    
+    kmin   = kin.min()
+    kmax   = kin.max()    
     kout   = np.arange(kmin, kmax+dk, dk)
     kpknew = rebin(kin, p0, p2, p4, modes, kout)
-    
-    # save
-    
-    
+        
     # test
     test = 1  # 0 or 1
     if test:
@@ -100,13 +101,11 @@ def main(sys):
         print('plot .. %s'%outputFig)
     
     with open(outputFile, 'w') as file:
-        file.write(f'# Original kmin, kmax, dk : {kmin:.4f}, {kmax:.4f}, {dkold:.4f}\n')
+        file.write(f'# Original kmin, kmax: {kmin:.4f}, {kmax:.4f}\n')
         file.write(f'# From original file {inputFile} \n')
-        file.write('# last column is number of modes\n')
-        for line in comments:
-            file.write(line)
-        
-        # kmin, p0, p2, p4, modes
+        file.write(comments[0])
+        file.write('# P0 is shot-noise subtracted\n')
+        file.write('# k_avg P0 P2 P4 Nmodes\n')
         for i in range(len(kpknew[0])):
             file.write(f'{kpknew[0][i]:.6f} {kpknew[1][i]:.6f} {kpknew[2][i]:.6f} {kpknew[3][i]:.6f} {kpknew[4][i]:.6f}\n')
             
