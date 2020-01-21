@@ -3,7 +3,7 @@
     Use Nbodykit to compute P0
 
 
-
+    - Jan 16: add nmodes to output
     - Nov 28: The functionality for reading multiple randoms does not work
 '''
 import sys
@@ -131,21 +131,25 @@ comm.Barrier()
 if rank == 0:
     #
     # write P0-shotnoise P2 P4 to file
-
     output = open(ns.output, 'w')
-    output.write('# shotnoise %f \n'%r.poles.attrs['shotnoise'])
-    output.write('# k_min P0 P2 P4\n')
+
+    # write the attributes
+    for k in r.attrs:
+        output.write(f'#{k:20s} : {r.attrs[k]}\n')
+    
+    output.write('# k_mid P0 P2 P4 Nmodes\n')
     for i in range(r.poles['k'].size):
-        output.write('{} {} {} {}\n'.format(r.poles['k'][i], 
-                                            r.poles['power_0'][i].real-r.poles.attrs['shotnoise'], 
-                                            r.poles['power_2'][i].real, 
-                                            r.poles['power_4'][i].real))   
+        output.write('{} {} {} {} {}\n'.format(r.poles['k'][i], 
+                                               r.poles['power_0'][i].real-r.poles.attrs['shotnoise'], 
+                                               r.poles['power_2'][i].real, 
+                                               r.poles['power_4'][i].real,
+                                               r.poles['modes'][i]))   
 
     # plot k vs kPell
     import matplotlib
     matplotlib.use('Agg')
     import matplotlib.pyplot as plt
-
+    
     k = r.poles['k']
     plt.figure()
     plt.title(zcol_name)

@@ -30,10 +30,11 @@ export NUMEXPR_MAX_THREADS=8
 # one of the arguments to run_pk is zlim which is 0.7 1.5 by default
 # eg. --zlim 0.7 1.5
 
-for mock_id in {2..100}
+#for mock_id in {2..100}
+for mock_id in 3 
 do
     echo $mock_id
-    version=0.5
+    version=0.6
     
     # real space
     mpirun -np 8 python run_pk.py --data ${path2data}FA_EZmock_desi_ELG_v0_${mock_id}.fits \
