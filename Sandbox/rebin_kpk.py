@@ -1,6 +1,6 @@
 '''
-    The power spectrum measurements do not have the number of models per k bin
-    This scripts, rebins the measurements, and adds that column
+    The power spectrum measurements do not have the number of modes per k bin
+    This script rebins the measurements, and adds the #modes column
 
     To run (loop over mock ids) 
     > for i in {2..100};
