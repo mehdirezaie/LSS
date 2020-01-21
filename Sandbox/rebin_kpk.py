@@ -72,7 +72,7 @@ def main(sys):
     
     dk = 0.005 #float(sys.argv[3])
     
-    # k_min, number of modes -- which is missing in v0.5 txt files
+    # k_avg, number of modes -- which is missing in v0.5 txt files
     kin, modes = np.loadtxt('/home/mehdi/data/mocksys/kmodes.txt', unpack=True)
     
     # read k, p0, p2, p4
