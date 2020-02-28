@@ -25,7 +25,7 @@ pk=${HOME}/github/LSSutils/scripts/analysis/run_pk.py
 #  we notice a lot of overhead when using all 6 randoms
 
 path2data=/B/Shared/Shadab/FA_LSS/
-path2output=/home/mehdi/data/mocksys/
+path2output=/B/Shared/mehdi/mocksys/
 path2randoms=/B/Shared/Shadab/FA_LSS/FA_EZmock_desi_ELG_v0_rand_0[0,1,2].fits
 
 
@@ -95,7 +95,7 @@ do
     for zcut in all low high 
     do 
         echo $mock_id
-        output_dir=/home/mehdi/data/mocksys/regression
+        output_dir=/B/Shared/mehdi/mocksys/regression
         ngal_features_5fold=${output_dir}/ngal_features_${mock_id}_${zcut}_${nside}.5r.npy
 
         # define output dirs
